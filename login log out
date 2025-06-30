@@ -1,0 +1,114 @@
+import React, { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
+export default function WorkTimeTracker() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [user, setUser] = useState(null);
+  const [log, setLog] = useState(null);
+  const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("login");
+
+  const handleLogin = async () => {
+    const res = await fetch("/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ email, password }),
+    });
+
+    if (res.ok) {
+      const text = await res.text();
+      setUser(email);
+      setLog(text);
+      setError("");
+      setActiveTab("dashboard");
+    } else {
+      setError("Login failed. Check credentials.");
+    }
+  };
+
+  const handleRegister = async () => {
+    const res = await fetch("/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ email: registerEmail, password: registerPassword }),
+    });
+
+    if (res.ok) {
+      setError("");
+      alert("Registration successful! Please login.");
+      setActiveTab("login");
+    } else {
+      setError("Registration failed. Try a different email.");
+    }
+  };
+
+  const handleLogout = async () => {
+    const res = await fetch("/logout", { method: "POST" });
+    const text = await res.text();
+    setLog(text);
+    setUser(null);
+    setActiveTab("login");
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
+      <Card className="w-full max-w-md shadow-xl rounded-2xl">
+        <CardContent className="p-6 space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="flex justify-between">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="register">Register</TabsTrigger>
+              {user && <TabsTrigger value="dashboard">Dashboard</TabsTrigger>}
+            </TabsList>
+
+            <TabsContent value="login">
+              <h2 className="text-xl font-semibold text-center mb-4">Clock In</h2>
+              <Input
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <Input
+                placeholder="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <Button onClick={handleLogin} className="w-full mt-4">Login</Button>
+              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+            </TabsContent>
+
+            <TabsContent value="register">
+              <h2 className="text-xl font-semibold text-center mb-4">Register</h2>
+              <Input
+                placeholder="Email"
+                value={registerEmail}
+                onChange={(e) => setRegisterEmail(e.target.value)}
+              />
+              <Input
+                placeholder="Password"
+                type="password"
+                value={registerPassword}
+                onChange={(e) => setRegisterPassword(e.target.value)}
+              />
+              <Button onClick={handleRegister} className="w-full mt-4">Register</Button>
+              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+            </TabsContent>
+
+            <TabsContent value="dashboard">
+              <h2 className="text-xl font-semibold text-center mb-4">Welcome, {user}</h2>
+              <Button onClick={handleLogout} className="w-full">Clock Out</Button>
+              {log && <p className="mt-4 text-gray-700 text-sm">{log}</p>}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
